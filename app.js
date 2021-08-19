@@ -12,18 +12,13 @@ const enableGlobalErrorLogging =
 // create the Express app
 const app = express();
 
+const routes = require('./routes');
+
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
 
-// Test connection to server
-(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Connection has been established successfully');
-  } catch (error) {
-    console.log('Unable to connect to database:', error.message);
-  }
-})();
+// setup '/api' route
+app.use('/api', routes);
 
 // setup a friendly greeting for the root route
 app.get('/', (req, res) => {
@@ -54,7 +49,19 @@ app.use((err, req, res, next) => {
 // set our port
 app.set('port', process.env.PORT || 5000);
 
-// start listening on our port
-const server = app.listen(app.get('port'), () => {
-  console.log(`Express server is listening on port ${server.address().port}`);
+// Test connection to server
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Connection has been established successfully');
+  } catch (error) {
+    console.log('Unable to connect to database:', error.message);
+  }
+})();
+
+// sync models with database, then start listening on our port
+sequelize.sync({ force: true }).then(() => {
+  const server = app.listen(app.get('port'), () => {
+    console.log(`Express server is listening on port ${server.address().port}`);
+  });
 });
