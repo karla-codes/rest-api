@@ -12,10 +12,24 @@ function asyncHandler(cb) {
     try {
       await cb(req, res, next);
     } catch (err) {
-      next(err);
+      if (
+        err.name === 'SequelizeValidationError' ||
+        err.name === 'SequelizeUniqueConstraintError'
+      ) {
+        console.log('Error:', err.name);
+        const errors = err.errors.map(err => err.message);
+        res.status(400).json({ errors });
+      } else {
+        next(err);
+      }
     }
   };
 }
+
+// handler function to check for validation errors
+// function validationHandler(err) {
+//checks if it's a validation error
+// }
 
 // User Routes
 
@@ -34,49 +48,34 @@ router.get(
 router.post(
   '/users',
   asyncHandler(async (req, res) => {
-    try {
-      const newUser = req.body;
+    const newUser = req.body;
 
-      const errors = [];
+    const errors = [];
 
-      if (!newUser.firstName) {
-        errors.push('Please provide a value for "First Name"');
-      }
+    if (!newUser.firstName) {
+      errors.push('Please provide a value for "First Name"');
+    }
 
-      if (!newUser.lastName) {
-        errors.push('Please provide a value for "Last Name"');
-      }
+    if (!newUser.lastName) {
+      errors.push('Please provide a value for "Last Name"');
+    }
 
-      if (!newUser.emailAddress) {
-        errors.push('Please provide a value for "Email Address"');
-      }
+    if (!newUser.emailAddress) {
+      errors.push('Please provide a value for "Email Address"');
+    }
 
-      let password = newUser.password;
-      if (!newUser.password) {
-        errors.push('Please provide a value for "Password"');
-      } else {
-        newUser.password = bcrypt.hashSync(password, 10);
-      }
+    let password = newUser.password;
+    if (!newUser.password) {
+      errors.push('Please provide a value for "Password"');
+    } else {
+      newUser.password = bcrypt.hashSync(password, 10);
+    }
 
-      if (errors.length > 0) {
-        res.status(400).json({ errors });
-      } else {
-        await User.create(newUser);
-        res.status(201).json({ message: 'Account successfully created!' });
-      }
-    } catch (err) {
-      console.log('Error:', err.name);
-
-      //checks if it's a validation error
-      if (
-        err.name === 'SequelizeValidationError' ||
-        err.name === 'SequelizeUniqueConstraintError'
-      ) {
-        const errors = err.errors.map(err => err.message);
-        res.status(400).json({ errors });
-      } else {
-        throw err;
-      }
+    if (errors.length > 0) {
+      res.status(400).json({ errors });
+    } else {
+      await User.create(newUser);
+      res.status(201).json({ message: 'Account successfully created!' });
     }
   })
 );
@@ -112,11 +111,27 @@ router.get(
 router.post(
   '/courses',
   asyncHandler(async (req, res) => {
-    // create new course
-    const course = await Course.create(req.body);
-    // set Location header to the URI for newly created course
-    // return 201 Status code and no content
-    res.status(201).location(`/courses/${course.id}`).end();
+    const newCourse = req.body;
+
+    const errors = [];
+
+    if (!newCourse.title) {
+      errors.push('Please provide a value for "title"');
+    }
+
+    if (!newCourse.description) {
+      errors.push('Please provide a value for "description"');
+    }
+
+    if (errors.length > 0) {
+      res.status(400).json({ errors });
+    } else {
+      // create new course
+      await Course.create(newCourse);
+      // set Location header to the URI for newly created course
+      // return 201 Status code and no content
+      res.status(201).location(`/courses/${course.id}`).end();
+    }
   })
 );
 
@@ -126,9 +141,16 @@ router.put(
   asyncHandler(async (req, res) => {
     // update corresponding course
     const course = await Course.findByPk(req.params.id);
-    await Course.update(course);
-    // return 204 status code and no content
-    res.status(204).end();
+
+    if (course) {
+      course.title = req.body.title;
+      course.description = req.body.description;
+      await Course.update(course);
+      // return 204 status code and no content
+      res.status(204).end();
+    } else {
+      res.status(404).json({ message: 'Course not found' });
+    }
   })
 );
 
