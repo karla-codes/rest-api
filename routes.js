@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+const { UPDATE } = require('sequelize/types/lib/query-types');
 
 const router = express.Router();
 const { User, Course } = require('./models');
@@ -87,8 +88,8 @@ router.post(
     // create new course
     const course = await Course.create(req.body);
     // set Location header to the URI for newly created course
-
     // return 201 Status code and no content
+    res.status(201).location(`/courses/${course.id}`).end();
   })
 );
 
@@ -97,7 +98,10 @@ router.put(
   '/courses/:id',
   asyncHandler(async (req, res) => {
     // update corresponding course
+    const course = await Course.findByPk(req.params.id);
+    await Course.update(course);
     // return 204 status code and no content
+    res.status(204).end();
   })
 );
 
@@ -106,8 +110,11 @@ router.delete(
   '/courses/:id',
   asyncHandler(async (req, res) => {
     // get course
+    const course = await Course.findByPk(req.params.id);
     // delete course
+    await Course.destroy(course);
     // return 204 status code and no content
+    res.status(204).end();
   })
 );
 
