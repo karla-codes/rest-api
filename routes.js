@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const { UPDATE } = require('sequelize/types/lib/query-types');
+const bcrypt = require('bcrypt');
 
 const router = express.Router();
 const { User, Course } = require('./models');
@@ -35,8 +35,35 @@ router.post(
   '/users',
   asyncHandler(async (req, res) => {
     try {
-      await User.create(req.body);
-      res.status(201).json({ message: 'Account successfully created!' });
+      const newUser = req.body;
+
+      const errors = [];
+
+      if (!newUser.firstName) {
+        errors.push('Please provide a value for "First Name"');
+      }
+
+      if (!newUser.lastName) {
+        errors.push('Please provide a value for "Last Name"');
+      }
+
+      if (!newUser.emailAddress) {
+        errors.push('Please provide a value for "Email Address"');
+      }
+
+      let password = newUser.password;
+      if (!newUser.password) {
+        errors.push('Please provide a value for "Password"');
+      } else {
+        newUser.password = bcrypt.hashSync(password, 10);
+      }
+
+      if (errors.length > 0) {
+        res.status(400).json({ errors });
+      } else {
+        await User.create(newUser);
+        res.status(201).json({ message: 'Account successfully created!' });
+      }
     } catch (err) {
       console.log('Error:', err.name);
 
