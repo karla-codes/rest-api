@@ -9,14 +9,9 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Course.hasMany(models.Course, {
-        foreignKey: {
-          fieldName: 'userId',
-          allowNull: false,
-        },
-      });
     }
   }
+
   Course.init(
     {
       title: {
@@ -51,5 +46,15 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'Course',
     }
   );
+
+  Course.associate = models => {
+    Course.belongsTo(models.Course, {
+      foreignKey: {
+        fieldName: 'userId',
+        allowNull: false,
+      },
+    });
+  };
+
   return Course;
 };

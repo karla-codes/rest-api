@@ -12,7 +12,9 @@ const enableGlobalErrorLogging =
 // create the Express app
 const app = express();
 
-const routes = require('./routes');
+const routes = require('./routes/routes');
+
+app.use(express.json());
 
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
