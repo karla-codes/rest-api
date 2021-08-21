@@ -35,7 +35,10 @@ router.get(
   '/users',
   authenticateUser,
   asyncHandler(async (req, res) => {
-    const user = await req.currentUser;
+    const user = await User.findOne({
+      attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
+      where: { id: req.currentUser.id },
+    });
     res.status(200).json(user);
   })
 );
@@ -50,20 +53,20 @@ router.post(
     const errors = [];
 
     if (!newUser.firstName) {
-      errors.push('Please provide a value for "First Name"');
+      errors.push("Please provide a value for 'First Name'");
     }
 
     if (!newUser.lastName) {
-      errors.push('Please provide a value for "Last Name"');
+      errors.push("Please provide a value for 'Last Name'");
     }
 
     if (!newUser.emailAddress) {
-      errors.push('Please provide a value for "Email Address"');
+      errors.push("Please provide a value for 'Email Address'");
     }
 
     let password = newUser.password;
     if (!newUser.password) {
-      errors.push('Please provide a value for "Password"');
+      errors.push("Please provide a value for 'Password'");
     } else {
       newUser.password = bcrypt.hashSync(password, 10);
     }
@@ -84,7 +87,15 @@ router.get(
   '/courses',
   asyncHandler(async (req, res) => {
     // return all courses
-    const courses = await Course.findAll({ include: [{ model: User }] });
+    const courses = await Course.findAll({
+      attributes: { exclude: ['createdAt', 'updatedAt'] },
+      include: [
+        {
+          model: User,
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ],
+    });
 
     // retutn user
     // return 200 status code
@@ -92,81 +103,97 @@ router.get(
   })
 );
 
-// // route that returns single course + user associated with course
-// router.get(
-//   '/courses/:id',
-//   asyncHandler(async (req, res) => {
-//     // return corresponding course
-//     const course = await Course.findByPk(req.params.id);
-//     // return User associated with course
-//     const userId = await course.userId;
-//     const user = await User.findAll({ where: { userId } });
-//     // return 200 status code
-//     res.status(200).json({ course, user });
-//   })
-// );
+// route that returns single course + user associated with course
+router.get(
+  '/courses/:id',
+  asyncHandler(async (req, res) => {
+    // return corresponding course
+    const course = await Course.findOne({
+      attributes: { exclude: ['createdAt', 'updatedAt'] },
+      where: { id: req.params.id },
+      include: [
+        { model: User, attributes: { exclude: ['createdAt', 'updatedAt'] } },
+      ],
+    });
+    res.status(200).json({ course });
+  })
+);
 
-// // route that creates a new course
-// router.post(
-//   '/courses',
-//   authenticateUser,
-//   asyncHandler(async (req, res) => {
-//     const newCourse = req.body;
+// route that creates a new course
+router.post(
+  '/courses',
+  authenticateUser,
+  asyncHandler(async (req, res) => {
+    const newCourse = req.body;
 
-//     const errors = [];
+    const errors = [];
 
-//     if (!newCourse.title) {
-//       errors.push('Please provide a value for "title"');
-//     }
+    if (!newCourse.title) {
+      errors.push("Please provide a value for 'title'");
+    }
 
-//     if (!newCourse.description) {
-//       errors.push('Please provide a value for "description"');
-//     }
+    if (!newCourse.description) {
+      errors.push("Please provide a value for 'description'");
+    }
 
-//     if (errors.length > 0) {
-//       res.status(400).json({ errors });
-//     } else {
-//       // create new course
-//       await Course.create(newCourse);
-//       // set Location header to the URI for newly created course
-//       // return 201 Status code and no content
-//       res.status(201).location(`/courses/${course.id}`).end();
-//     }
-//   })
-// );
+    if (errors.length > 0) {
+      res.status(400).json({ errors });
+    } else {
+      // create new course
+      await Course.create(newCourse);
+      // set Location header to the URI for newly created course
+      // return 201 Status code and no content
+      res.status(201).location(`/courses/${newCourse.id}`).end();
+    }
+  })
+);
 
-// // route that updates a single course
-// router.put(
-//   '/courses/:id',
-//   authenticateUser,
-//   asyncHandler(async (req, res) => {
-//     // update corresponding course
-//     const course = await Course.findByPk(req.params.id);
+// route that updates a single course
+router.put(
+  '/courses/:id',
+  authenticateUser,
+  asyncHandler(async (req, res) => {
+    // update corresponding course
+    const course = await Course.findByPk(req.params.id);
 
-//     if (course) {
-//       course.title = req.body.title;
-//       course.description = req.body.description;
-//       await Course.update(course);
-//       // return 204 status code and no content
-//       res.status(204).end();
-//     } else {
-//       res.status(404).json({ message: 'Course not found' });
-//     }
-//   })
-// );
+    if (course) {
+      if (course === req.currentUser) {
+        await course.update({
+          title: req.body.title,
+          description: req.body.description,
+        });
+        // return 204 status code and no content
+        res.status(204).end();
+      } else {
+        res.status(403).end();
+      }
+    } else {
+      res.status(404).json({ message: 'Course not found' });
+    }
+  })
+);
 
-// // route that deletes a single course
-// router.delete(
-//   '/courses/:id',
-//   authenticateUser,
-//   asyncHandler(async (req, res) => {
-//     // get course
-//     const course = await Course.findByPk(req.params.id);
-//     // delete course
-//     await Course.destroy(course);
-//     // return 204 status code and no content
-//     res.status(204).end();
-//   })
-// );
+// route that deletes a single course
+router.delete(
+  '/courses/:id',
+  authenticateUser,
+  asyncHandler(async (req, res) => {
+    // get course
+    const course = await Course.findByPk(req.params.id);
+
+    if (course) {
+      if (course === req.currentUser) {
+        // delete course
+        await course.destroy(course);
+        // return 204 status code and no content
+        res.status(204).end();
+      } else {
+        res.status(403).end();
+      }
+    } else {
+      res.status(404).json({ message: 'Course not found' });
+    }
+  })
+);
 
 module.exports = router;
