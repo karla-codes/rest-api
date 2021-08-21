@@ -40,56 +40,57 @@ router.get(
   })
 );
 
-// // route that creates a new user -WORKS
-// router.post(
-//   '/users',
-//   asyncHandler(async (req, res) => {
-//     const newUser = await req.body;
-//     console.log(req.body);
+// route that creates a new user -WORKS
+router.post(
+  '/users',
+  asyncHandler(async (req, res) => {
+    const newUser = await req.body;
+    console.log(req.body);
 
-//     const errors = [];
+    const errors = [];
 
-//     if (!newUser.firstName) {
-//       errors.push('Please provide a value for "First Name"');
-//     }
+    if (!newUser.firstName) {
+      errors.push('Please provide a value for "First Name"');
+    }
 
-//     if (!newUser.lastName) {
-//       errors.push('Please provide a value for "Last Name"');
-//     }
+    if (!newUser.lastName) {
+      errors.push('Please provide a value for "Last Name"');
+    }
 
-//     if (!newUser.emailAddress) {
-//       errors.push('Please provide a value for "Email Address"');
-//     }
+    if (!newUser.emailAddress) {
+      errors.push('Please provide a value for "Email Address"');
+    }
 
-//     let password = newUser.password;
-//     if (!newUser.password) {
-//       errors.push('Please provide a value for "Password"');
-//     } else {
-//       newUser.password = bcrypt.hashSync(password, 10);
-//     }
+    let password = newUser.password;
+    if (!newUser.password) {
+      errors.push('Please provide a value for "Password"');
+    } else {
+      newUser.password = bcrypt.hashSync(password, 10);
+    }
 
-//     if (errors.length > 0) {
-//       res.status(400).json({ errors });
-//     } else {
-//       await User.create(newUser);
-//       res.status(201).json({ message: 'Account successfully created!' });
-//     }
-//   })
-// );
+    if (errors.length > 0) {
+      res.status(400).json({ errors });
+    } else {
+      await User.create(newUser);
+      res.status(201).json({ message: 'Account successfully created!' });
+    }
+  })
+);
 
 // // Courses Routes
 
-// // route that returns all courses + users associated with each course
-// router.get(
-//   '/courses',
-//   asyncHandler(async (req, res) => {
-//     // return all courses
-//     const courses = await Course.findAll();
-//     console.log(courses);
-//     // return 200 status code
-//     res.status(200).json({ courses });
-//   })
-// );
+// route that returns all courses + user associated with each course
+router.get(
+  '/courses',
+  asyncHandler(async (req, res) => {
+    // return all courses
+    const courses = await Course.findAll({ include: [{ model: User }] });
+
+    // retutn user
+    // return 200 status code
+    res.status(200).json({ courses });
+  })
+);
 
 // // route that returns single course + user associated with course
 // router.get(
