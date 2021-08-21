@@ -1,6 +1,6 @@
 # REST API
 
-A REST API that provides users a way to administer a school database containing information about users and courses.
+A REST API that provides users a way to administer a school database containing information about users and courses. This is the 9th project in the [Treehouse](https://teamtreehouse.com/) Full Stack JavaScript Techdegree.
 
 ## Built With
 
@@ -23,3 +23,7 @@ $ npm install
 ```
 $ npm start
 ```
+
+## License
+
+MIT (c) Karla Walker
