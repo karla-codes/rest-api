@@ -75,7 +75,10 @@ router.post(
       res.status(400).json({ errors });
     } else {
       await User.create(newUser);
-      res.status(201).json({ message: 'Account successfully created!' });
+      res
+        .status(201)
+        .location('/')
+        .json({ message: 'Account successfully created!' });
     }
   })
 );
