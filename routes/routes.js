@@ -43,7 +43,7 @@ router.get(
   })
 );
 
-// route that creates a new user -WORKS
+// route that creates a new user
 router.post(
   '/users',
   asyncHandler(async (req, res) => {
@@ -89,7 +89,6 @@ router.post(
 router.get(
   '/courses',
   asyncHandler(async (req, res) => {
-    // return all courses
     const courses = await Course.findAll({
       attributes: { exclude: ['createdAt', 'updatedAt'] },
       include: [
@@ -100,8 +99,6 @@ router.get(
       ],
     });
 
-    // retutn user
-    // return 200 status code
     res.status(200).json({ courses });
   })
 );
@@ -110,7 +107,6 @@ router.get(
 router.get(
   '/courses/:id',
   asyncHandler(async (req, res) => {
-    // return corresponding course
     const course = await Course.findOne({
       attributes: { exclude: ['createdAt', 'updatedAt'] },
       where: { id: req.params.id },
@@ -156,7 +152,6 @@ router.put(
   '/courses/:id',
   authenticateUser,
   asyncHandler(async (req, res) => {
-    // update corresponding course
     const course = await Course.findByPk(req.params.id);
 
     if (course) {
@@ -165,7 +160,6 @@ router.put(
           title: req.body.title,
           description: req.body.description,
         });
-        // return 204 status code and no content
         res.status(204).end();
       } else {
         res.status(403).end();
@@ -181,14 +175,11 @@ router.delete(
   '/courses/:id',
   authenticateUser,
   asyncHandler(async (req, res) => {
-    // get course
     const course = await Course.findByPk(req.params.id);
 
     if (course) {
       if (course === req.currentUser) {
-        // delete course
         await course.destroy(course);
-        // return 204 status code and no content
         res.status(204).end();
       } else {
         res.status(403).end();
