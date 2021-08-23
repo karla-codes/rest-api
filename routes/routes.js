@@ -75,10 +75,7 @@ router.post(
       res.status(400).json({ errors });
     } else {
       await User.create(newUser);
-      res
-        .status(201)
-        .location('/')
-        .json({ message: 'Account successfully created!' });
+      res.status(201).location('/');
     }
   })
 );
@@ -94,7 +91,7 @@ router.get(
       include: [
         {
           model: User,
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
         },
       ],
     });
@@ -111,7 +108,10 @@ router.get(
       attributes: { exclude: ['createdAt', 'updatedAt'] },
       where: { id: req.params.id },
       include: [
-        { model: User, attributes: { exclude: ['createdAt', 'updatedAt'] } },
+        {
+          model: User,
+          attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
+        },
       ],
     });
     res.status(200).json({ course });
@@ -123,28 +123,10 @@ router.post(
   '/courses',
   authenticateUser,
   asyncHandler(async (req, res) => {
-    const newCourse = req.body;
-
-    const errors = [];
-
-    if (!newCourse.title) {
-      errors.push("Please provide a value for 'title'");
-    }
-
-    if (!newCourse.description) {
-      errors.push("Please provide a value for 'description'");
-    }
-
-    if (errors.length > 0) {
-      res.status(400).json({ errors });
-    } else {
-      // create new course
-      await Course.create(newCourse);
-      // set Location header to the URI for newly created course
-      // return 201 Status code and no content
-      res.status(201).location(`/courses/${newCourse.id}`).end();
-    }
+    const newCourse = await Course.create(req.body);
+    res.status(201).location(`/courses/${newCourse.id}`).end();
   })
+  // })
 );
 
 // route that updates a single course
@@ -153,9 +135,11 @@ router.put(
   authenticateUser,
   asyncHandler(async (req, res) => {
     const course = await Course.findByPk(req.params.id);
+    console.log(course);
+    console.log(req.currentUser);
 
     if (course) {
-      if (course === req.currentUser) {
+      if (course.userId === req.currentUser.id) {
         await course.update({
           title: req.body.title,
           description: req.body.description,
@@ -176,9 +160,11 @@ router.delete(
   authenticateUser,
   asyncHandler(async (req, res) => {
     const course = await Course.findByPk(req.params.id);
+    console.log(course);
+    console.log(req.currentUser);
 
     if (course) {
-      if (course === req.currentUser) {
+      if (course.userId === req.currentUser.id) {
         await course.destroy(course);
         res.status(204).end();
       } else {
