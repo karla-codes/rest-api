@@ -48,35 +48,9 @@ router.post(
   '/users',
   asyncHandler(async (req, res) => {
     const newUser = await req.body;
-    console.log(req.body);
 
-    const errors = [];
-
-    if (!newUser.firstName) {
-      errors.push("Please provide a value for 'First Name'");
-    }
-
-    if (!newUser.lastName) {
-      errors.push("Please provide a value for 'Last Name'");
-    }
-
-    if (!newUser.emailAddress) {
-      errors.push("Please provide a value for 'Email Address'");
-    }
-
-    let password = newUser.password;
-    if (!newUser.password) {
-      errors.push("Please provide a value for 'Password'");
-    } else {
-      newUser.password = bcrypt.hashSync(password, 10);
-    }
-
-    if (errors.length > 0) {
-      res.status(400).json({ errors });
-    } else {
-      await User.create(newUser);
-      res.status(201).location('/');
-    }
+    await User.create(newUser);
+    res.status(201).location('/').end();
   })
 );
 
